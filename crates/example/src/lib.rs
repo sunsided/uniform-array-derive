@@ -52,6 +52,12 @@ mod tests {
         assert_eq!(value[1], 1.0);
         assert_eq!(value[2], 0.0);
         assert_eq!(value[3], 0.0);
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe")]
+    fn named_unsafe() {
+        let mut value = Named::default();
 
         // From slice
         let array = [0.0; 4];
