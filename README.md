@@ -57,7 +57,7 @@ the [ensure-uniform-type](https://github.com/sunsided/ensure-uniform-type-rs) cr
 
 [build-link]: https://github.com/sunsided/uniform-array-derive/actions
 
-[safety-image]: https://img.shields.io/badge/unsafe-forbidden-success.svg
+[safety-image]: https://img.shields.io/badge/unsafe-optional-success.svg
 
 [safety-link]: https://github.com/rust-secure-code/safety-dance/
 
