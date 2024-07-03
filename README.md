@@ -9,7 +9,7 @@
 ![MSRV][msrv-image]
 [![EUPL 1.2 licensed][license-eupl-image]][license-eupl-link]
 
-This will derive `AsRef<[T]>`, `AsMut<[T]>, `Deref<Target = [T]>`, `DerefMut`, `Index<Target = T>` and `IndexMut`
+This will derive `AsRef<[T]>`, `AsMut<[T]>`, `Deref<Target = [T]>`, `DerefMut`, `Index<Target = T>` and `IndexMut`
 for your homogeneous structs field type `T`. Since the generated code is `unsafe`, it is feature gated behind a
 `#[cfg(feature = "unsafe")]` by default.
 
