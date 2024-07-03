@@ -5,7 +5,7 @@ authors = ["Markus Mayer <widemeadows@gmail.com>"]
 categories = ["no-std", "no-std::no-alloc"]
 edition = "2021"
 license = "EUPL-1.2"
-rust-version = "1.64.0"
+rust-version = "1.70.0"
 repository = "https://github.com/sunsided/uniform-array-derive"
 homepage = "https://github.com/sunsided/uniform-array-derive"
 

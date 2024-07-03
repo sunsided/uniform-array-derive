@@ -61,7 +61,7 @@ the [ensure-uniform-type](https://github.com/sunsided/ensure-uniform-type-rs) cr
 
 [safety-link]: https://github.com/rust-secure-code/safety-dance/
 
-[msrv-image]: https://img.shields.io/badge/rustc-1.67+-blue.svg
+[msrv-image]: https://img.shields.io/badge/rustc-1.70+-blue.svg
 
 [license-eupl-image]: https://img.shields.io/badge/license-EUPL_1.2-blue.svg
 
