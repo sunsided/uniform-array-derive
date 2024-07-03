@@ -1,0 +1,21 @@
+[workspace.package]
+version = "0.1.0"
+description = "A derive macro for turning uniform types into slices"
+authors = ["Markus Mayer <widemeadows@gmail.com>"]
+categories = ["no-std", "no-std::no-alloc"]
+edition = "2021"
+license = "EUPL-1.2"
+rust-version = "1.64.0"
+repository = "https://github.com/sunsided/uniform-array-derive"
+homepage = "https://github.com/sunsided/uniform-array-derive"
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/uniform-array-derive",
+    "crates/example"
+]
+default-members = [
+    "crates/uniform-array-derive",
+    "crates/example"
+]
