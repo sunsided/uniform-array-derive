@@ -50,29 +50,60 @@ mod tests {
 
     #[test]
     fn named() {
-        let value = Named::default();
+        let mut value = Named::default();
         assert_eq!(value.len(), 4);
+
+        // IndexMut
+        value[1] = 1.0;
+
+        // Index
+        assert_eq!(value[0], 0.0);
+        assert_eq!(value[1], 1.0);
+        assert_eq!(value[2], 0.0);
+        assert_eq!(value[3], 0.0);
     }
 
     #[test]
     fn named_generic() {
-        let value = NamedGeneric::<f32>::default();
+        let mut value = NamedGeneric::<f32>::default();
         assert_eq!(value.len(), 4);
+
+        // IndexMut
+        value[1] = 1.0;
+
+        // Index
+        assert_eq!(value[0], 0.0);
+        assert_eq!(value[1], 1.0);
+        assert_eq!(value[2], 0.0);
+        assert_eq!(value[3], 0.0);
     }
 
     #[test]
     fn tuple() {
-        let value = Tuple::default();
+        let mut value = Tuple::default();
         assert_eq!(value.len(), 2);
         assert_eq!(value.0, 0);
         assert_eq!(value.1, 0);
+
+        // IndexMut
+        value[1] = 1;
+
+        // Index
+        assert_eq!(value[0], 0);
+        assert_eq!(value[1], 1);
     }
 
     #[test]
     fn newtype() {
-        let value = Newtype::default();
+        let mut value = Newtype::default();
         assert_eq!(value.len(), 1);
         assert_eq!(value.0, 0);
+
+        // IndexMut
+        value[0] = 1;
+
+        // Index
+        assert_eq!(value[0], 1);
     }
 
     #[test]

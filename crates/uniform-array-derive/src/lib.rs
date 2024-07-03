@@ -49,50 +49,102 @@ pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
 
                 /// Indicates whether this type is zero-length.
                 #[doc = #is_empty_doc]
-                pub const fn is_empty(&self) -> usize {
+                pub const fn is_empty(&self) -> bool {
                     #is_empty
                 }
             }
         });
 
+        let mut index_match_arms = Vec::new();
+        let mut index_mut_match_arms = Vec::new();
+
         if fields.fields.is_empty() {
-            quote! {}
         } else {
             // Assume the first field type is the required uniform size type
-            let first_field_type = fields.fields.first().unwrap().ty.clone();
+            let first_field_type_ty = fields.fields.first().unwrap().ty.clone();
 
             // HACK: We cannot compare syn::Type instances directly, so we instead compare them by name.
-            let first_field_type = quote!(#first_field_type).to_string();
+            let first_field_type = quote!(#first_field_type_ty).to_string();
 
             for (field_idx, field) in fields.fields.iter().enumerate() {
                 let field_type = &field.ty;
                 let field_type = quote!(#field_type).to_string();
 
-                if first_field_type != field_type {
-                    let error_message = if let Some(name) = &field.ident {
-                        format!(
+                if let Some(name) = &field.ident {
+                    // named field
+                    if first_field_type != field_type {
+                        let error_message = format!(
                             "Struct \"{}\" has fields of different types. Expected uniform use of {}, found {} in field \"{}\".",
                             struct_name,
                             first_field_type,
                             field_type,
                             name
-                        )
-                    } else {
-                        format!(
+                        );
+                        return syn::Error::new_spanned(input, error_message)
+                            .to_compile_error()
+                            .into();
+                    }
+
+                    index_match_arms.push(quote! {
+                        #field_idx => &self . #name,
+                    });
+
+                    index_mut_match_arms.push(quote! {
+                        #field_idx => &mut self . #name,
+                    });
+                } else {
+                    // tuple field
+                    if first_field_type != field_type {
+                        let error_message = format!(
                             "Struct \"{}\" has fields of different types. Expected uniform use of {}, found {} in field .{}.",
                             struct_name,
                             first_field_type,
                             field_type,
                             field_idx
-                        )
-                    };
-                    return syn::Error::new_spanned(input, error_message)
-                        .to_compile_error()
-                        .into();
-                }
+                        );
+                        return syn::Error::new_spanned(input, error_message)
+                            .to_compile_error()
+                            .into();
+                    }
+
+                    index_match_arms.push(quote! {
+                        #field_idx => &self . #field_idx,
+                    });
+                    index_mut_match_arms.push(quote! {
+                        #field_idx => &mut self . #field_idx,
+                    });
+                };
             }
 
-            quote! {}
+            implementations.push(quote! {
+                impl #impl_generics core::ops::Index<usize> for #struct_name #type_generics
+                #where_clause
+                {
+                    type Output = #first_field_type_ty;
+
+                    #[allow(clippy::inline_always)]
+                    #[inline(always)]
+                    fn index(&self, index: usize) -> &Self::Output {
+                        match index {
+                            #( #index_match_arms )*
+                            _ => panic!("Index out of bounds: Invalid access of index {index} for type with {} fields.", #num_fields),
+                        }
+                    }
+                }
+
+                impl #impl_generics core::ops::IndexMut<usize> for #struct_name #type_generics
+                #where_clause
+                {
+                    #[allow(clippy::inline_always)]
+                    #[inline(always)]
+                    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+                        match index {
+                            #( #index_mut_match_arms )*
+                            _ => panic!("Index out of bounds: Invalid access of index {index} for type with {} fields.", #num_fields),
+                        }
+                    }
+                }
+            });
         }
     } else {
         // Covered by darling's acceptance rules.
