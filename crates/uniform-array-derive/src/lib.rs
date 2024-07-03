@@ -194,6 +194,40 @@ pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
                         unsafe { &mut *(slice.as_mut_ptr() as *mut Self) }
                     }
                 }
+
+                #[cfg(feature = #unsafe_feature)]
+                #unsafe_docsrs
+                impl #impl_generics core::convert::AsRef<[#first_field_type_ty]> for #struct_name #type_generics
+                #where_clause
+                {
+                    fn as_ref(&self) -> &[#first_field_type_ty] {
+                        unsafe {
+                            // SAFETY: $type_name only contains `$type_param` fields and is `repr(C)`
+                            core::slice::from_raw_parts(
+                                self as *const _ as *const #first_field_type_ty,
+                                core::mem::size_of::<#struct_name #type_generics>()
+                                    / core::mem::size_of::<#first_field_type_ty>(),
+                            )
+                        }
+                    }
+                }
+
+                #[cfg(feature = #unsafe_feature)]
+                #unsafe_docsrs
+                impl #impl_generics core::convert::AsMut<[#first_field_type_ty]> for #struct_name #type_generics
+                #where_clause
+                {
+                    fn as_mut(&mut self) -> &mut [#first_field_type_ty] {
+                        unsafe {
+                            // SAFETY: $type_name only contains `$type_param` fields and is `repr(C)`
+                            core::slice::from_raw_parts_mut(
+                                self as *mut _ as *mut #first_field_type_ty,
+                                core::mem::size_of::<#struct_name #type_generics>()
+                                    / core::mem::size_of::<#first_field_type_ty>(),
+                            )
+                        }
+                    }
+                }
             });
         }
     } else {

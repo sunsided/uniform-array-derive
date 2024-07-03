@@ -64,7 +64,17 @@ mod tests {
         assert_eq!(value[2], 0.0);
         assert_eq!(value[3], 0.0);
 
-        let _some = Named::from_slice(&[0.0; 4]);
+        // From slice
+        let array = [0.0; 4];
+        let _some = Named::from_slice(&array);
+
+        // AsMut
+        let slice = value.as_mut();
+        slice[2] = 2.0;
+
+        // AsRef
+        let slice = value.as_ref();
+        assert_eq!(slice[2], 2.0);
     }
 
     #[test]
