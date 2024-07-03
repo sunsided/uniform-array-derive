@@ -10,5 +10,10 @@ repository.workspace = true
 homepage.workspace = true
 readme = "../../README.md"
 
+[features]
+default = ["unsafe"]
+unsafe = []
+unsafest = []
+
 [dependencies]
 uniform-array-derive = { path = "../uniform-array-derive" }

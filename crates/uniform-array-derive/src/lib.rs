@@ -1,9 +1,17 @@
 extern crate proc_macro;
 
-use darling::{FromDeriveInput, FromField};
+use darling::{FromDeriveInput, FromField, FromMeta};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Type};
+
+#[derive(Default, Debug, FromMeta)]
+#[darling(default)]
+struct UniformArrayAttributes {
+    #[darling(rename = "safety_gate")]
+    unsafe_feature: String,
+    docs_rs: Option<String>,
+}
 
 #[derive(Debug, FromField)]
 struct FieldData {
@@ -12,16 +20,21 @@ struct FieldData {
 }
 
 #[derive(Debug, FromDeriveInput)]
-#[darling(supports(struct_any))]
+#[darling(supports(struct_any), attributes(uniform_array))]
 struct UniformArrayType {
     ident: syn::Ident,
     data: darling::ast::Data<darling::util::Ignored, FieldData>,
+    #[darling(flatten)]
+    uniform_array: UniformArrayAttributes,
 }
 
-#[proc_macro_derive(UniformArray)]
+#[proc_macro_derive(UniformArray, attributes(uniform_array))]
 pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let data = UniformArrayType::from_derive_input(&input).expect("Failed to parse input");
+
+    let config = data.uniform_array;
+    let unsafe_feature = config.unsafe_feature;
 
     let struct_name = &data.ident;
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
@@ -115,6 +128,12 @@ pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
                 };
             }
 
+            let unsafe_docsrs = if let Some(name) = &config.docs_rs {
+                quote! { #[cfg_attr(#name, doc(cfg(feature = #unsafe_feature)))] }
+            } else {
+                quote! {}
+            };
+
             implementations.push(quote! {
                 impl #impl_generics core::ops::Index<usize> for #struct_name #type_generics
                 #where_clause
@@ -141,6 +160,38 @@ pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
                             #( #index_mut_match_arms )*
                             _ => panic!("Index out of bounds: Invalid access of index {index} for type with {} fields.", #num_fields),
                         }
+                    }
+                }
+
+                #[cfg(feature = #unsafe_feature)]
+                #unsafe_docsrs
+                impl #impl_generics #struct_name #type_generics
+                #where_clause
+                {
+                    /// Constructs a new instance from a slice.
+                    #[allow(unused)]
+                    #[inline]
+                    pub fn from_slice(slice: &[#first_field_type_ty]) -> &Self {
+                        core::assert_eq!(
+                            slice.len(),
+                            core::mem::size_of::<Self>() / core::mem::size_of::<#first_field_type_ty>()
+                        );
+
+                        // SAFETY: $type_name only contains `$type_param` fields and is `repr(C)`
+                        unsafe { &*(slice.as_ptr() as *const Self) }
+                    }
+
+                    /// Constructs a new instance from a mutable slice.
+                    #[allow(unused)]
+                    #[inline]
+                    pub fn from_mut_slice(slice: &mut [#first_field_type_ty]) -> &mut Self {
+                        core::assert_eq!(
+                            slice.len(),
+                            core::mem::size_of::<Self>() / core::mem::size_of::<#first_field_type_ty>()
+                        );
+
+                        // SAFETY: $type_name only contains `$type_param` fields and is `repr(C)`
+                        unsafe { &mut *(slice.as_mut_ptr() as *mut Self) }
                     }
                 }
             });

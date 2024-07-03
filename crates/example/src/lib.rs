@@ -2,6 +2,7 @@ use uniform_array_derive::UniformArray;
 
 /// An example type.
 #[derive(Default, UniformArray)]
+#[uniform_array(safety_gate = "unsafest")]
 pub struct NamedGeneric<T>
 where
     T: Sized,
@@ -14,6 +15,7 @@ where
 
 /// An example type.
 #[derive(Default, UniformArray)]
+#[uniform_array(safety_gate = "unsafe")]
 pub struct Named {
     pub a: f32,
     pub b: f32,
@@ -61,6 +63,8 @@ mod tests {
         assert_eq!(value[1], 1.0);
         assert_eq!(value[2], 0.0);
         assert_eq!(value[3], 0.0);
+
+        let _some = Named::from_slice(&[0.0; 4]);
     }
 
     #[test]
@@ -76,6 +80,12 @@ mod tests {
         assert_eq!(value[1], 1.0);
         assert_eq!(value[2], 0.0);
         assert_eq!(value[3], 0.0);
+    }
+
+    #[test]
+    #[cfg(feature = "unsafest")]
+    fn named_generic_safety() {
+        let _some = NamedGeneric::<f32>::from_slice(&[0.0; 4]);
     }
 
     #[test]
