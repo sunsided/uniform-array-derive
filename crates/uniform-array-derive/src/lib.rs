@@ -1,11 +1,9 @@
 extern crate proc_macro;
 
-use darling::ast::{Fields, Style};
-use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
+use darling::{FromDeriveInput, FromField};
 use proc_macro::TokenStream;
 use quote::quote;
-use std::any::Any;
-use syn::{parse_macro_input, DeriveInput, Field, GenericParam, Path, Type};
+use syn::{parse_macro_input, DeriveInput, Type};
 
 #[derive(Debug, FromField)]
 struct FieldData {
@@ -107,11 +105,12 @@ pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
                             .into();
                     }
 
+                    let i = syn::Index::from(field_idx);
                     index_match_arms.push(quote! {
-                        #field_idx => &self . #field_idx,
+                        #field_idx => &self . #i,
                     });
                     index_mut_match_arms.push(quote! {
-                        #field_idx => &mut self . #field_idx,
+                        #field_idx => &mut self . #i,
                     });
                 };
             }
