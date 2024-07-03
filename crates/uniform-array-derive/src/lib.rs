@@ -228,6 +228,28 @@ pub fn derive_uniform_array(input: TokenStream) -> TokenStream {
                         }
                     }
                 }
+
+                #[cfg(feature = #unsafe_feature)]
+                #unsafe_docsrs
+                impl #impl_generics core::ops::Deref for #struct_name #type_generics
+                #where_clause
+                {
+                    type Target = [#first_field_type_ty];
+
+                    fn deref(&self) -> &Self::Target {
+                        self.as_ref()
+                    }
+                }
+
+                #[cfg(feature = #unsafe_feature)]
+                #unsafe_docsrs
+                impl #impl_generics core::ops::DerefMut for #struct_name #type_generics
+                #where_clause
+                {
+                    fn deref_mut(&mut self) -> &mut Self::Target {
+                        self.as_mut()
+                    }
+                }
             });
         }
     } else {

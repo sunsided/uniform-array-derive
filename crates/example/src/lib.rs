@@ -35,17 +35,6 @@ pub struct Tuple(pub i32, pub i32);
 #[derive(Default, UniformArray)]
 pub struct Unit;
 
-/*
-/// An example type.
-#[derive(Default, UniformArray)]
-pub struct Named2 {
-    pub a: f32,
-    pub b: f32,
-    pub c: u32,
-    pub d: f32,
-}
-*/
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,7 +55,8 @@ mod tests {
 
         // From slice
         let array = [0.0; 4];
-        let _some = Named::from_slice(&array);
+        let some = Named::from_slice(&array);
+        assert!(core::ptr::eq(array.as_ptr(), some.as_ptr()));
 
         // AsMut
         let slice = value.as_mut();
@@ -75,6 +65,14 @@ mod tests {
         // AsRef
         let slice = value.as_ref();
         assert_eq!(slice[2], 2.0);
+
+        // Deref
+        let slice: &[f32] = core::ops::Deref::deref(&value);
+        assert!(core::ptr::eq(slice.as_ptr(), value.as_ptr()));
+
+        // DerefMut
+        let slice: &mut [f32] = core::ops::DerefMut::deref_mut(&mut value);
+        assert!(core::ptr::eq(slice.as_ptr(), value.as_ptr()));
     }
 
     #[test]
