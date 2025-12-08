@@ -15,7 +15,7 @@ readme = "../../README.md"
 syn = "2.0.68"
 quote = "1.0"
 proc-macro2 = "1.0"
-darling = "0.20.9"
+darling = "0.23.0"
 ensure-uniform-type = "0.1.1"
 
 [lib]
