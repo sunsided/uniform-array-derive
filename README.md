@@ -2,12 +2,13 @@
 
 > Derive array-like behavior for your structs of uniform types.
 
-[![Crates.io][crates-image]][crates-link]
-[![Docs][docs-image]][docs-link]
-[![Build Status][build-image]][build-link]
-[![Safety Dance][safety-image]][safety-link]
-![MSRV][msrv-image]
-[![License: MIT OR Apache-2.0][license-image]][license-link]
+[![crates.io](https://img.shields.io/crates/v/uniform-array-derive.svg)](https://crates.io/crates/uniform-array-derive)
+[![docs.rs](https://img.shields.io/docsrs/uniform-array-derive)](https://docs.rs/uniform-array-derive)
+[![CI](https://github.com/sunsided/uniform-array-derive/actions/workflows/ci.yml/badge.svg)](https://github.com/sunsided/uniform-array-derive/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/sunsided/uniform-array-derive/graph/badge.svg)](https://codecov.io/gh/sunsided/uniform-array-derive)
+[![MSRV](https://img.shields.io/crates/msrv/uniform-array-derive)](https://crates.io/crates/uniform-array-derive)
+[![License](https://img.shields.io/crates/l/uniform-array-derive)](https://github.com/sunsided/uniform-array-derive#license)
+[![unsafe optional](https://img.shields.io/badge/unsafe-optional-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 This will derive `AsRef<[T]>`, `AsMut<[T]>`, `Deref<Target = [T]>`, `DerefMut`, `Index<Target = T>` and `IndexMut`
 for your homogeneous structs field type `T`. Since the slice conversions are `unsafe`, they are feature gated behind
@@ -16,7 +17,26 @@ for your homogeneous structs field type `T`. Since the slice conversions are `un
 When the feature gate is enabled, the struct must be `#[repr(C)]` (or `#[repr(transparent)]` for a single field)
 so that its layout matches `[T; N]`. `packed` and `align` representations are rejected.
 
+## Install
+
+```sh
+cargo add uniform-array-derive
+```
+
+The slice conversions are compiled only when *your* crate enables the gate feature, so declare it in your
+`Cargo.toml`:
+
+```toml
+[features]
+default = ["unsafe"]
+unsafe = []
+```
+
+## Usage
+
 ```rust
+use uniform_array_derive::UniformArray;
+
 #[derive(UniformArray)]
 #[repr(C)]
 pub struct Vector3 {
@@ -33,6 +53,8 @@ pub struct Coordinate(u32, u32);
 If you need to rename the feature gate, you can do that as well:
 
 ```rust
+use uniform_array_derive::UniformArray;
+
 /// Use a custom feature gate instead of "unsafe".
 #[derive(UniformArray)]
 #[uniform_array(safety_gate = "super_unsafe")]
@@ -51,6 +73,8 @@ where
 To mark the gated items on docs.rs, name the cfg your crate uses for docs.rs builds:
 
 ```rust
+use uniform_array_derive::UniformArray;
+
 #[derive(UniformArray)]
 #[uniform_array(docs_rs = "docsrs")]
 #[repr(C)]
@@ -59,6 +83,15 @@ pub struct Vector2(f32, f32);
 
 If you only need to ensure that all your fields have the same type, consider
 the [ensure-uniform-type](https://github.com/sunsided/ensure-uniform-type-rs) crate instead.
+
+## MSRV
+
+The minimum supported Rust version is 1.88. Raising it is not a breaking change; it happens in a minor release and
+is noted in the changelog.
+
+## Contributing
+
+See [CONTRIBUTING.md](https://github.com/sunsided/uniform-array-derive/blob/main/CONTRIBUTING.md).
 
 ## License
 
@@ -72,26 +105,3 @@ at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
-
-[crates-image]: https://img.shields.io/crates/v/uniform-array-derive
-
-[crates-link]: https://crates.io/crates/uniform-array-derive
-
-[docs-image]: https://docs.rs/uniform-array-derive/badge.svg
-
-[docs-link]: https://docs.rs/uniform-array-derive/
-
-[build-image]: https://github.com/sunsided/uniform-array-derive/workflows/Rust/badge.svg
-
-[build-link]: https://github.com/sunsided/uniform-array-derive/actions
-
-[safety-image]: https://img.shields.io/badge/unsafe-optional-success.svg
-
-[safety-link]: https://github.com/rust-secure-code/safety-dance/
-
-[msrv-image]: https://img.shields.io/badge/rustc-1.88+-blue.svg
-
-[license-image]: https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg
-
-[license-link]: https://github.com/sunsided/uniform-array-derive#license
-

@@ -9,7 +9,7 @@ license.workspace = true
 repository.workspace = true
 homepage.workspace = true
 rust-version.workspace = true
-readme = "../../README.md"
+readme = "README.md"
 
 [dependencies]
 syn = "3.0"

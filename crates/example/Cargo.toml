@@ -8,7 +8,6 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
-readme = "../../README.md"
 
 [features]
 default = ["unsafe"]
