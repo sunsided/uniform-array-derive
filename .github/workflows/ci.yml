@@ -193,7 +193,11 @@ jobs:
       - uses: taiki-e/install-action@25f51f6b1bf4e18876107cece836f4f77ac17c8c # v2.90.7
         with:
           tool: cargo-fuzz
-      - run: cargo +nightly fuzz build
+      # The prebuilt cargo-fuzz is a musl binary and defaults --target to its own build
+      # target, which has no nightly core here; build for the runner's host instead.
+      - run: |
+          host="$(rustc +nightly -vV | sed -n 's/^host: //p')"
+          cargo +nightly fuzz build --target "$host"
         working-directory: fuzz
       - run: cargo fmt --all --check && cargo +nightly clippy --all-targets -- -D warnings
         working-directory: fuzz
