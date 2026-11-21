@@ -1,13 +1,13 @@
 [package]
 name = "uniform-array-derive"
-description.workspace = true
-version.workspace = true
+version = "0.1.0"
+description = "A derive macro for turning uniform types into slices"
+keywords = ["derive", "array", "slice", "uniform", "repr-c"]
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
 rust-version.workspace = true
 readme = "README.md"
 
