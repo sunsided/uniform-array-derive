@@ -1,0 +1,25 @@
+[package]
+name = "uniform-array-derive-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+syn = "3.0"
+quote = "1.0.47"
+proc-macro2 = "1.0.107"
+darling = "0.24.1"
+
+# Separate workspace, so the root workspace does not pick up this nightly-only crate.
+[workspace]
+
+[[bin]]
+name = "expand"
+path = "fuzz_targets/expand.rs"
+test = false
+doc = false
+bench = false

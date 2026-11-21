@@ -1,0 +1,5 @@
+# Mutants in the derive crate are caught by the example crate's tests and doctests.
+test_workspace = true
+additional_cargo_args = ["--all-features"]
+# Test-only code: the example crate is a fixture, and mutating tests proves nothing.
+exclude_globs = ["crates/example/**", "**/tests.rs"]

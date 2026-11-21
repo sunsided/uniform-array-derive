@@ -1,0 +1,1 @@
+#[repr(C)] pub struct S<T> { a: T, b: T }

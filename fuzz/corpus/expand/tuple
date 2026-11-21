@@ -1,0 +1,1 @@
+#[uniform_array(safety_gate = "x", docs_rs = "docsrs")] #[repr(C, align(16))] struct T(u8, u8, u8);

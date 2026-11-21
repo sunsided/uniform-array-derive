@@ -11,6 +11,8 @@ on:
       - 'Cargo.toml'
       - 'crates/**/Cargo.toml'
       - 'crates/**src/**'
+      - 'fuzz/**'
+      - '.cargo/mutants.toml'
       - '.codespellrc'
       - '.github/workflows/rust.yml'
   pull_request:
@@ -21,6 +23,8 @@ on:
       - 'Cargo.toml'
       - 'crates/**/Cargo.toml'
       - 'crates/**src/**'
+      - 'fuzz/**'
+      - '.cargo/mutants.toml'
       - '.codespellrc'
       - '.github/workflows/rust.yml'
 
@@ -96,6 +100,62 @@ jobs:
           components: miri
       - name: Run tests under Miri
         run: cargo miri test --all-features
+
+  kani:
+    name: Kani proofs
+    needs:
+      - lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the unsafe slice conversions
+        uses: model-checking/kani-github-action@v1.1
+        with:
+          args: -p example
+
+  mutants:
+    name: Mutation tests
+    needs:
+      - lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-mutants
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - name: Run cargo-mutants
+        run: cargo mutants --no-shuffle -vV
+      - name: Upload mutants report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutants.out
+          path: mutants.out
+
+  fuzz:
+    name: Build fuzz targets
+    needs:
+      - lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+      - name: Install cargo-fuzz
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+      - name: Check format
+        working-directory: fuzz
+        run: cargo fmt --check
+      - name: Clippy
+        working-directory: fuzz
+        run: cargo clippy --all-targets
+      - name: Build
+        run: cargo fuzz build
 
   build-linux:
     name: Build on Linux
