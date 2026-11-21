@@ -1,0 +1,8 @@
+version = 1
+
+# Default: everything under the project license expression.
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 Markus Mayer"
+SPDX-License-Identifier = "MIT OR Apache-2.0"

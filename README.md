@@ -64,8 +64,8 @@ the [ensure-uniform-type](https://github.com/sunsided/ensure-uniform-type-rs) cr
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0 ([LICENSE-Apache-2.0](https://github.com/sunsided/uniform-array-derive/blob/main/LICENSE-Apache-2.0) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](https://github.com/sunsided/uniform-array-derive/blob/main/LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
 
 at your option.
 
