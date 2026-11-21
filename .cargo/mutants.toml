@@ -3,3 +3,7 @@ test_workspace = true
 additional_cargo_args = ["--all-features"]
 # Test-only code: the example crate is a fixture, and mutating tests proves nothing.
 exclude_globs = ["crates/example/**", "**/tests.rs"]
+# The inline `const` layout assert is a backstop behind check_layout: every layout reaching
+# the derive (cfg_attr included) is already rejected there, so no input can make it fire.
+# It stays because a gap in check_layout would otherwise be undefined behavior.
+exclude_re = ["replace layout_check -> TokenStream with Default::default\\(\\)"]
