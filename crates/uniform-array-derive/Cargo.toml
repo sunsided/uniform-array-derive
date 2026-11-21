@@ -12,10 +12,10 @@ rust-version.workspace = true
 readme = "../../README.md"
 
 [dependencies]
-syn = "2.0.68"
-quote = "1.0"
-proc-macro2 = "1.0"
-darling = "0.20.9"
+syn = "3.0"
+quote = "1.0.47"
+proc-macro2 = "1.0.107"
+darling = "0.24.1"
 
 [lib]
 proc-macro = true

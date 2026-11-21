@@ -89,7 +89,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [safety-link]: https://github.com/rust-secure-code/safety-dance/
 
-[msrv-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
+[msrv-image]: https://img.shields.io/badge/rustc-1.88+-blue.svg
 
 [license-image]: https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg
 

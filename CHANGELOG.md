@@ -8,7 +8,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Relicensed under `MIT OR Apache-2.0` (was `EUPL-1.2`).
-- The MSRV is now 1.85, and the crates use edition 2024.
+- The MSRV is now 1.88, and the crates use edition 2024.
 - Field types are now checked for exact equality by the compiler instead of by name, so `f32`,
   `core::primitive::f32` and type aliases of `f32` count as the same type, while fields that only
   coerce to the first field's type (e.g. `Box<Box<T>>` next to `Box<T>`) are rejected.
