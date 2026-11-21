@@ -1,0 +1,221 @@
+# https://taskfile.dev
+# Keep `ci` in sync with .github/workflows/ci.yml: same checks, same flags.
+# Keep an existing Taskfile's file name (Taskfile.yml etc.); merge these tasks into it.
+version: '3'
+
+includes:
+  fuzz:
+    taskfile: fuzz/Taskfile.dist.yaml
+    dir: fuzz
+    optional: true
+
+vars:
+  # Prefer cargo-nextest when installed; fall back to cargo test.
+  NEXTEST:
+    sh: cargo nextest --version >/dev/null 2>&1 && echo yes || echo no
+  # Doctests need a library target; binary-only crates have none.
+  HAS_LIB:
+    sh: cargo metadata --no-deps --format-version 1 | grep -qE '"kind":\[[^]]*"(lib|rlib|proc-macro)"' && echo yes || echo no
+  # Branching model checked by lint:branch: github (main + feature/) or gitflow.
+  BRANCH_FLOW: github
+
+env:
+  # Newer nextest fails when a crate has no tests; warn instead (ignored by older versions).
+  NEXTEST_NO_TESTS: warn
+
+tasks:
+  default:
+    cmds:
+      - task --list --sort=none
+    silent: true
+
+  build:
+    desc: Build all targets in the workspace (benches included), then the fuzz targets
+    cmds:
+      - cargo build --workspace --all-targets --all-features {{.CLI_ARGS}}
+      - task: fuzz:build
+
+  test:
+    desc: Run tests (nextest if installed, cargo test otherwise), then doctests
+    cmds:
+      - cmd: cargo nextest run --workspace --all-features {{.CLI_ARGS}}
+        if: '[ "{{.NEXTEST}}" = "yes" ]'
+      - cmd: cargo test --workspace --all-targets --all-features {{.CLI_ARGS}}
+        if: '[ "{{.NEXTEST}}" = "no" ]'
+      - task: test:doc
+      # Without the safety gate only Index/len are generated; keep that build tested too.
+      - cargo test --workspace --no-default-features
+
+  test:doc:
+    desc: Run doctests (nextest does not run them; skipped for binary-only crates)
+    aliases: [test:docs]
+    cmds:
+      - cmd: cargo test --workspace --all-features --doc
+        if: '[ "{{.HAS_LIB}}" = "yes" ]'
+
+  test:prop:
+    desc: Run property tests with a high case count (PROPTEST_CASES, default 10000)
+    env:
+      PROPTEST_CASES: '{{.PROPTEST_CASES | default "10000"}}'
+    cmds:
+      # A nested `task` process inherits env; `task: test` would not.
+      - task test
+
+  fmt:
+    desc: Format all Rust sources
+    cmds:
+      - cargo fmt --all
+      - task: fuzz:fmt
+
+  fmt:check:
+    desc: Check formatting without modifying files
+    cmds:
+      - cargo fmt --all --check
+
+  lint:
+    desc: Run all linters
+    cmds:
+      - task: lint:clippy
+      - task: lint:separators
+      - task: lint:readme
+      - task: lint:typos
+      - task: lint:actions
+
+  lint:clippy:
+    desc: Clippy (pedantic, warnings as errors)
+    cmds:
+      - cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  lint:fix:
+    desc: Auto-fix clippy findings and typos, then format (review the diff)
+    cmds:
+      - cargo clippy --workspace --all-targets --all-features --fix --allow-dirty --allow-staged
+      - typos --write-changes
+      - task: fmt
+
+  lint:separators:
+    desc: Fail on `// ----` style separator comments (split the file into modules instead)
+    cmds:
+      - "! grep -rnE --include='*.rs' --exclude-dir=target --exclude-dir=.git '^[[:space:]]*//+[[:space:]]*[-=*#~_/]{4,}' ."
+
+  lint:readme:
+    desc: Fail on relative links or images in README files (crates.io needs absolute URLs)
+    cmds:
+      # `if` instead of `! a | b`: Task's shell does not negate pipelines like bash does.
+      - |
+        if grep -rnoE --include='README.md' --exclude-dir=target --exclude-dir=.git --exclude-dir=review '(\]\(|src=")[^)"]*' . \
+          | grep -vE ':(\]\(|src=")(https?://|#|mailto:)'; then
+          echo "use absolute URLs for these links (docs/readme.md)"
+          exit 1
+        fi
+
+  lint:typos:
+    desc: Spell-check code and docs
+    preconditions:
+      - sh: command -v typos
+        msg: "typos not found - cargo install --locked typos-cli"
+    cmds:
+      - typos
+
+  lint:branch:
+    desc: Check the branch name against the branching model (BRANCH=..., default current)
+    cmds:
+      - sh scripts/check-branch.sh "{{.BRANCH}}" "{{.BRANCH_FLOW}}"
+
+  lint:actions:
+    desc: Lint GitHub Actions workflows (actionlint + zizmor)
+    preconditions:
+      - sh: command -v uvx
+        msg: "uvx not found - https://docs.astral.sh/uv/getting-started/installation/"
+    cmds:
+      # Run through uvx, not a local install: the snap build cannot read repos outside $HOME.
+      - uvx --from actionlint-py actionlint
+      - uvx zizmor .github/
+
+  doc:
+    desc: Build docs including private items, warnings as errors
+    aliases: [docs]
+    env:
+      RUSTDOCFLAGS: -D warnings
+    cmds:
+      - cargo doc --workspace --all-features --no-deps --document-private-items
+
+  deny:
+    desc: Check advisories, licenses, bans and sources
+    preconditions:
+      - sh: cargo deny --version
+        msg: "cargo-deny not found - cargo install --locked cargo-deny"
+    cmds:
+      - cargo deny --all-features check
+
+  msrv:
+    desc: Check every crate on its declared rust-version
+    preconditions:
+      - sh: cargo hack --version
+        msg: "cargo-hack not found - cargo install --locked cargo-hack"
+    cmds:
+      - cargo hack check --rust-version --workspace --all-targets --ignore-private
+
+  coverage:
+    desc: Coverage report (lcov.info, gitignored; HTML with -- --html)
+    preconditions:
+      - sh: cargo llvm-cov --version
+        msg: "cargo-llvm-cov not found - cargo install --locked cargo-llvm-cov"
+    cmds:
+      - cmd: cargo llvm-cov nextest --workspace --all-features --lcov --output-path lcov.info {{.CLI_ARGS}}
+        if: '[ "{{.NEXTEST}}" = "yes" ]'
+      - cmd: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info {{.CLI_ARGS}}
+        if: '[ "{{.NEXTEST}}" = "no" ]'
+
+  miri:
+    desc: Run the tests under Miri to catch undefined behavior in the generated unsafe code
+    preconditions:
+      - sh: cargo +nightly miri --version
+        msg: "Miri not found - rustup +nightly component add miri"
+    cmds:
+      - cargo +nightly miri test --workspace --all-features {{.CLI_ARGS}}
+
+  kani:
+    desc: Prove the generated slice conversions with Kani (crates/example/src/proofs.rs)
+    preconditions:
+      - sh: cargo kani --version
+        msg: "Kani not found - cargo install --locked kani-verifier && cargo kani setup"
+    cmds:
+      - cargo kani -p example {{.CLI_ARGS}}
+
+  mutants:
+    desc: Mutation-test the derive crate (config in .cargo/mutants.toml)
+    preconditions:
+      - sh: cargo mutants --version
+        msg: "cargo-mutants not found - cargo install --locked cargo-mutants"
+    cmds:
+      - cargo mutants {{.CLI_ARGS}}
+
+  bench:
+    desc: "Run benchmarks (criterion flags after --: task bench -- --quick)"
+    cmds:
+      # --bench '*': only [[bench]] targets (--benches would include lib harnesses that reject criterion flags).
+      - cargo bench --workspace --bench '*' -- {{.CLI_ARGS}}
+
+  ci:
+    desc: Run the CI checks locally (mirrors .github/workflows/ci.yml)
+    cmds:
+      - task: lint:branch
+      - task: fmt:check
+      - task: lint
+      - task: doc
+      - task: test
+      - task: deny
+      - task: msrv
+      - task: miri
+      - task: kani
+      - task: mutants
+      - task: fuzz:build
+      - task: fuzz:lint
+
+  clean:
+    desc: Remove build output, including fuzz builds (keeps fuzz corpora and crash artifacts)
+    cmds:
+      - cargo clean
+      - task: fuzz:clean
+      - rm -f lcov.info

@@ -1,6 +1,7 @@
 //! Fuzzes the derive expansion: any input must expand without panicking into parsable items.
 
 #![no_main]
+#![forbid(unsafe_code)]
 
 use libfuzzer_sys::fuzz_target;
 

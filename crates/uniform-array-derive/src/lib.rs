@@ -1,6 +1,5 @@
-//! Derive array-like behavior for structs whose fields all share one type.
-//!
-//! See the [README](https://github.com/sunsided/uniform-array-derive) for usage.
+#![doc = include_str!("../README.md")]
+#![forbid(unsafe_code)]
 
 extern crate proc_macro;
 

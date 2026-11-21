@@ -1,0 +1,55 @@
+[workspace]
+# Versions come from git tags; release-plz tags and creates GitHub Releases but never runs
+# cargo publish. publish-crates-io.yml publishes from the tag (tag-restricted `crates-io` environment).
+git_only = true
+# Release only when the release PR is merged, not on every push that bumps a version.
+release_always = false
+# cargo-semver-checks cannot check proc-macro crates (no library API surface), so it is off.
+# Breaking changes therefore need a Break/Change/Remove... subject or a BREAKING CHANGE: line.
+semver_check = false
+changelog_update = true
+git_release_enable = true
+# Versions are SemVer 2.0; pre-release versions (1.2.0-rc.1) become GitHub pre-releases.
+git_release_type = "auto"
+# Release PR branches follow the branching model (release/*), not the default `release-plz-`.
+pr_branch_prefix = "release/"
+# Imperative PR title (the default is "chore: release v..."); squash merges use it as the subject,
+# and the changelog parser skips it via ^Release. {{ package }} is set only for one crate and
+# {{ version }} only for one crate or a shared version; unset variables fail the render.
+pr_name = "Release{% if package and version %} {{ package }} v{{ version }}{% elif version %} v{{ version }}{% endif %}"
+# Commits are imperative ("Add X", "Fix Y"), not Conventional Commits: map subject verbs to bumps.
+# Both regexes apply regardless of the version, so the right pair depends on the crate's major.
+# uniform-array-derive is >= 1.0.0: additions are minor, breaking changes major, fixes and
+# everything else patch. (For a 0.x crate, use only
+# custom_minor_increment_regex = "\\A(Break|Change|Rename|Replace|Remove|Drop|Delete)\\b|(?m:^BREAKING CHANGE:)"
+# and no major regex: it would jump to 1.0.0.)
+custom_minor_increment_regex = "\\A(Add|Introduce|Support|Allow|Implement|Expose)\\b"
+custom_major_increment_regex = "\\ABreak\\b|(?m:^BREAKING CHANGE:)"
+# Tag names: release-plz defaults to "v{{ version }}" with one public crate and
+# "{{ package }}-v{{ version }}" with several. Leave unset to keep those defaults.
+
+[changelog]
+commit_parsers = [
+  { message = "^(Merge|Release|Bump version)\\b", skip = true },
+  # Dependabot subjects carry an ecosystem prefix (templates/.github/dependabot.yml).
+  { message = "^Actions: ", skip = true },
+  { message = "^(Add|Introduce|Support|Allow|Implement|Expose)\\b", group = "Added" },
+  { message = "^(Fix|Correct|Resolve|Prevent|Repair)\\b", group = "Fixed" },
+  { message = "^Deprecate\\b", group = "Deprecated" },
+  { message = "^(Remove|Drop|Delete)\\b", group = "Removed" },
+  { message = "^(Secure|Harden)\\b", group = "Security" },
+  { message = "^((Cargo|npm|Docker): )?Bump\\b", group = "Dependencies" },
+  { message = "^.*", group = "Changed" },
+]
+
+[[package]]
+name = "uniform-array-derive"
+# The only published crate keeps the plain vX.Y.Z tags of its existing releases.
+git_tag_name = "v{{ version }}"
+# The changelog stays at the repository root, where it has always been.
+changelog_path = "CHANGELOG.md"
+
+[[package]]
+name = "example"
+# Test fixture, never released (publish = false in its Cargo.toml).
+release = false

@@ -1,12 +1,83 @@
----
+# Works with prek (preferred: `prek install`) and pre-commit (`pre-commit install`).
+# Local hooks call Taskfile tasks so checks stay defined in one place.
+# Pin external repos to SHAs: `prek auto-update --freeze` / `pre-commit autoupdate --freeze`.
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+# License texts are verbatim SPDX downloads and fuzz seeds are byte-exact inputs; whitespace fixers must not touch them.
+exclude: ^(LICENSES/|LICENSE-|fuzz/corpus/)
+
 repos:
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/crate-ci/typos
+    rev: 276087d9a4f06398b3e04825487805e2d7375888  # frozen: v1.52.2
+    hooks:
+      - id: typos
+
+  - repo: local
     hooks:
       - id: fmt
-      # - id: cargo-check
+        name: cargo fmt --check
+        entry: task fmt:check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: separators
+        name: no separator comments
+        entry: task lint:separators
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: readme-links
+        name: absolute URLs in README files
+        entry: task lint:readme
+        language: system
+        files: README\.md$
+        pass_filenames: false
+
+      - id: actions
+        name: actionlint + zizmor
+        entry: task lint:actions
+        language: system
+        files: ^\.github/
+        pass_filenames: false
+
+      - id: commit-msg
+        name: imperative commit subject
+        entry: python3 scripts/check-commit-msg.py
+        language: system
+        stages: [commit-msg]
+
+      - id: branch
+        name: branch follows the branching model
+        entry: task lint:branch
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
       - id: clippy
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.4
-    hooks:
-      - id: codespell
+        name: clippy (pedantic)
+        entry: task lint:clippy
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: test
+        name: tests
+        entry: task test
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages: [pre-push]

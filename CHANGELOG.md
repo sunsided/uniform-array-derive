@@ -5,6 +5,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+The next release is 1.0.0: the API is considered stable from here on.
+
 ### Changed
 
 - Relicensed under `MIT OR Apache-2.0` (was `EUPL-1.2`).
