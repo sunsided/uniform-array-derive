@@ -19,12 +19,12 @@ pr_branch_prefix = "release/"
 pr_name = "Release{% if package and version %} {{ package }} v{{ version }}{% elif version %} v{{ version }}{% endif %}"
 # Commits are imperative ("Add X", "Fix Y"), not Conventional Commits: map subject verbs to bumps.
 # Both regexes apply regardless of the version, so the right pair depends on the crate's major.
-# 0.x (Cargo's rule: 0.MINOR is the breaking position): additions and fixes are patch bumps,
-# breaking changes are minor. No custom_major_increment_regex in 0.x: it would jump to 1.0.0.
-custom_minor_increment_regex = "\\A(Break|Change|Rename|Replace|Remove|Drop|Delete)\\b|(?m:^BREAKING CHANGE:)"
-# From 1.0.0 on, replace the line above with these two (per [[package]] in a mixed workspace):
-# custom_minor_increment_regex = "\\A(Add|Introduce|Support|Allow|Implement|Expose)\\b"
-# custom_major_increment_regex = "\\ABreak\\b|(?m:^BREAKING CHANGE:)"
+# uniform-array-derive is >= 1.0.0: additions are minor, breaking changes major, fixes and
+# everything else patch. (For a 0.x crate, use only
+# custom_minor_increment_regex = "\\A(Break|Change|Rename|Replace|Remove|Drop|Delete)\\b|(?m:^BREAKING CHANGE:)"
+# and no major regex: it would jump to 1.0.0.)
+custom_minor_increment_regex = "\\A(Add|Introduce|Support|Allow|Implement|Expose)\\b"
+custom_major_increment_regex = "\\ABreak\\b|(?m:^BREAKING CHANGE:)"
 # Tag names: release-plz defaults to "v{{ version }}" with one public crate and
 # "{{ package }}-v{{ version }}" with several. Leave unset to keep those defaults.
 
