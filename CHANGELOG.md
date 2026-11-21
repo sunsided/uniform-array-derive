@@ -5,6 +5,24 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/sunsided/uniform-array-derive/compare/v0.1.0...v1.0.0) - 2026-11-21
+
+### Added
+
+- Add workspace lints and fix the findings
+- Add REUSE licensing metadata
+
+### Changed
+
+- Prepare the 1.0.0 release
+- Give each crate its own version and add keywords
+- Use the README as doctested crate docs
+- Move expansion into a testable module and add property tests
+- Upgrade to syn 3 and darling 0.24
+- Make slice conversions sound and move to edition 2024
+- Relicense under MIT OR Apache-2.0
+- Update README.md
+
 The next release is 1.0.0: the API is considered stable from here on.
 
 ### Changed
