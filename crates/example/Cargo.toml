@@ -20,5 +20,5 @@ uniform-array-derive = { path = "../uniform-array-derive" }
 [dev-dependencies]
 proptest = "1.12.0"
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ["cfg(kani)"] }
+[lints]
+workspace = true

@@ -47,7 +47,7 @@
 //!
 #![cfg_attr(
     feature = "unsafe",
-    doc = r#"
+    doc = r"
 With the safety gate enabled, the struct must be `repr(C)` or `repr(transparent)`:
 
 ```compile_fail
@@ -64,7 +64,7 @@ struct NoRepr { a: f32, b: f32 }
 #[repr(C, align(16))]
 struct Aligned { x: f32, y: f32, z: f32 }
 ```
-"#
+"
 )]
 //!
 //! The `docs_rs` option names the cfg that enables `doc(cfg(...))` badges:
@@ -76,6 +76,8 @@ struct Aligned { x: f32, y: f32, z: f32 }
 //! #[repr(C)]
 //! struct Documented(f32, f32);
 //! ```
+
+#![forbid(unsafe_code)]
 
 use uniform_array_derive::UniformArray;
 
@@ -93,9 +95,13 @@ pub struct NamedGeneric<T>
 where
     T: Sized,
 {
+    /// Element 0.
     pub a: T,
+    /// Element 1.
     pub b: T,
+    /// Element 2.
     pub c: T,
+    /// Element 3.
     pub d: T,
 }
 
@@ -104,9 +110,13 @@ where
 #[uniform_array(safety_gate = "unsafe")]
 #[repr(C)]
 pub struct Named {
+    /// Element 0.
     pub a: f32,
+    /// Element 1.
     pub b: f32,
+    /// Element 2.
     pub c: f32,
+    /// Element 3.
     pub d: f32,
 }
 
@@ -133,6 +143,12 @@ pub struct Borrowed<'a, T>(pub &'a T, pub &'a T);
 mod tests {
     use super::*;
 
+    /// Bit patterns of `values`, so tests compare exact written-and-read-back floats
+    /// without tripping `clippy::float_cmp`.
+    fn bits(values: [f32; 4]) -> [u32; 4] {
+        values.map(f32::to_bits)
+    }
+
     #[test]
     fn named() {
         let mut value = Named::default();
@@ -142,10 +158,10 @@ mod tests {
         value[1] = 1.0;
 
         // Index
-        assert_eq!(value[0], 0.0);
-        assert_eq!(value[1], 1.0);
-        assert_eq!(value[2], 0.0);
-        assert_eq!(value[3], 0.0);
+        assert_eq!(
+            bits([value[0], value[1], value[2], value[3]]),
+            bits([0.0, 1.0, 0.0, 0.0])
+        );
     }
 
     #[test]
@@ -164,14 +180,14 @@ mod tests {
 
         // AsRef
         let slice = value.as_ref();
-        assert_eq!(slice[2], 2.0);
+        assert_eq!(slice[2..3], [2.0]);
 
         // Deref
-        let slice: &[f32] = core::ops::Deref::deref(&value);
+        let slice: &[f32] = &value;
         assert!(core::ptr::eq(slice.as_ptr(), value.as_ptr()));
 
         // DerefMut
-        let slice: &mut [f32] = core::ops::DerefMut::deref_mut(&mut value);
+        let slice: &mut [f32] = &mut value;
         assert!(core::ptr::eq(slice.as_ptr(), value.as_ptr()));
     }
 
@@ -184,10 +200,10 @@ mod tests {
         value[1] = 1.0;
 
         // Index
-        assert_eq!(value[0], 0.0);
-        assert_eq!(value[1], 1.0);
-        assert_eq!(value[2], 0.0);
-        assert_eq!(value[3], 0.0);
+        assert_eq!(
+            bits([value[0], value[1], value[2], value[3]]),
+            bits([0.0, 1.0, 0.0, 0.0])
+        );
     }
 
     #[test]
@@ -215,7 +231,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "unsafe")]
-    #[should_panic]
+    #[should_panic(expected = "assertion `left == right` failed")]
     fn from_slice_wrong_len() {
         let _ = Tuple::from_slice(&[1, 2, 3]);
     }

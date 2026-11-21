@@ -82,7 +82,7 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
     };
 
     // `supports(struct_any)` already rejected enums and unions.
-    let fields = data.take_struct().map(|f| f.fields).unwrap_or_default();
+    let fields = data.take_struct().map_or_else(Vec::new, |f| f.fields);
     let mut expanded = len_impl(&input, &ident, fields.len());
 
     let Some(first) = fields.first() else {
@@ -261,17 +261,32 @@ fn index_impls(target: &Target<'_>) -> TokenStream {
 /// Generates the gated `unsafe` slice conversions: `from_slice`, `from_mut_slice`,
 /// `AsRef`, `AsMut`, `Deref` and `DerefMut`.
 fn slice_impls(target: &Target<'_>) -> TokenStream {
-    let struct_name = target.ident;
     let gate = target.gate;
-    let elem_ty = target.elem_ty;
-    let num_fields = target.members.len();
-    let (impl_generics, type_generics, where_clause) = target.input.generics.split_for_impl();
     let docsrs = target
         .docs_rs
         .map(|name| quote! { #[cfg_attr(#name, doc(cfg(feature = #gate)))] });
+    let gated = quote! {
+        #[cfg(feature = #gate)]
+        #docsrs
+    };
+    let layout_check = layout_check(target);
 
-    // Compile-time backstop for layouts `check_layout` cannot see.
-    let layout_check = quote! {
+    let mut impls = from_slice_impl(target, &gated, &layout_check);
+    impls.extend(as_slice_impls(target, &gated, &layout_check));
+    impls.extend(deref_impls(target, &gated));
+
+    impls
+}
+
+/// Generates a compile-time assertion that `Self` has the size and alignment of `[T; N]`.
+///
+/// A backstop for layouts that [`check_layout`] cannot see from the attributes. Every
+/// generated function that casts between `Self` and `[T]` evaluates it first.
+fn layout_check(target: &Target<'_>) -> TokenStream {
+    let elem_ty = target.elem_ty;
+    let num_fields = target.members.len();
+
+    quote! {
         const {
             ::core::assert!(
                 ::core::mem::size_of::<Self>() == #num_fields * ::core::mem::size_of::<#elem_ty>()
@@ -279,11 +294,22 @@ fn slice_impls(target: &Target<'_>) -> TokenStream {
                 "UniformArray: struct layout does not match an array of its field type"
             );
         }
-    };
+    }
+}
+
+/// Generates the inherent `from_slice` and `from_mut_slice` constructors behind `gated`.
+fn from_slice_impl(
+    target: &Target<'_>,
+    gated: &TokenStream,
+    layout_check: &TokenStream,
+) -> TokenStream {
+    let struct_name = target.ident;
+    let elem_ty = target.elem_ty;
+    let num_fields = target.members.len();
+    let (impl_generics, type_generics, where_clause) = target.input.generics.split_for_impl();
 
     quote! {
-        #[cfg(feature = #gate)]
-        #docsrs
+        #gated
         impl #impl_generics #struct_name #type_generics
         #where_clause
         {
@@ -316,9 +342,22 @@ fn slice_impls(target: &Target<'_>) -> TokenStream {
                 unsafe { &mut *slice.as_mut_ptr().cast::<Self>() }
             }
         }
+    }
+}
 
-        #[cfg(feature = #gate)]
-        #docsrs
+/// Generates the `AsRef<[T]>` and `AsMut<[T]>` impls behind `gated`.
+fn as_slice_impls(
+    target: &Target<'_>,
+    gated: &TokenStream,
+    layout_check: &TokenStream,
+) -> TokenStream {
+    let struct_name = target.ident;
+    let elem_ty = target.elem_ty;
+    let num_fields = target.members.len();
+    let (impl_generics, type_generics, where_clause) = target.input.generics.split_for_impl();
+
+    quote! {
+        #gated
         impl #impl_generics ::core::convert::AsRef<[#elem_ty]> for #struct_name #type_generics
         #where_clause
         {
@@ -331,8 +370,7 @@ fn slice_impls(target: &Target<'_>) -> TokenStream {
             }
         }
 
-        #[cfg(feature = #gate)]
-        #docsrs
+        #gated
         impl #impl_generics ::core::convert::AsMut<[#elem_ty]> for #struct_name #type_generics
         #where_clause
         {
@@ -344,9 +382,17 @@ fn slice_impls(target: &Target<'_>) -> TokenStream {
                 }
             }
         }
+    }
+}
 
-        #[cfg(feature = #gate)]
-        #docsrs
+/// Generates the `Deref` and `DerefMut` impls behind `gated`, delegating to `AsRef`/`AsMut`.
+fn deref_impls(target: &Target<'_>, gated: &TokenStream) -> TokenStream {
+    let struct_name = target.ident;
+    let elem_ty = target.elem_ty;
+    let (impl_generics, type_generics, where_clause) = target.input.generics.split_for_impl();
+
+    quote! {
+        #gated
         impl #impl_generics ::core::ops::Deref for #struct_name #type_generics
         #where_clause
         {
@@ -357,8 +403,7 @@ fn slice_impls(target: &Target<'_>) -> TokenStream {
             }
         }
 
-        #[cfg(feature = #gate)]
-        #docsrs
+        #gated
         impl #impl_generics ::core::ops::DerefMut for #struct_name #type_generics
         #where_clause
         {
