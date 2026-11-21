@@ -79,6 +79,9 @@ struct Aligned { x: f32, y: f32, z: f32 }
 
 use uniform_array_derive::UniformArray;
 
+#[cfg(all(test, feature = "unsafe"))]
+mod properties;
+
 /// An example type.
 #[derive(Default, UniformArray)]
 #[uniform_array(safety_gate = "unsafest")]

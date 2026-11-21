@@ -17,5 +17,8 @@ quote = "1.0.47"
 proc-macro2 = "1.0.107"
 darling = "0.24.1"
 
+[dev-dependencies]
+proptest = "1.12.0"
+
 [lib]
 proc-macro = true

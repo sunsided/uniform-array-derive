@@ -17,3 +17,6 @@ unsafest = []
 
 [dependencies]
 uniform-array-derive = { path = "../uniform-array-derive" }
+
+[dev-dependencies]
+proptest = "1.12.0"
