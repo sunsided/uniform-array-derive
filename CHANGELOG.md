@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Relicensed under `MIT OR Apache-2.0` (was `EUPL-1.2`).
+
 ## [0.1.0] - 2024-07-03
 
 [0.1.0]: https://github.com/sunsided/uniform-array-derive/releases/tag/v0.1.0

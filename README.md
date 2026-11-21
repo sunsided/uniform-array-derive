@@ -7,7 +7,7 @@
 [![Build Status][build-image]][build-link]
 [![Safety Dance][safety-image]][safety-link]
 ![MSRV][msrv-image]
-[![EUPL 1.2 licensed][license-eupl-image]][license-eupl-link]
+[![License: MIT OR Apache-2.0][license-image]][license-link]
 
 This will derive `AsRef<[T]>`, `AsMut<[T]>`, `Deref<Target = [T]>`, `DerefMut`, `Index<Target = T>` and `IndexMut`
 for your homogeneous structs field type `T`. Since the generated code is `unsafe`, it is feature gated behind a
@@ -45,6 +45,19 @@ where
 If you only need to ensure that all your fields have the same type, consider
 the [ensure-uniform-type](https://github.com/sunsided/ensure-uniform-type-rs) crate instead.
 
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
 [crates-image]: https://img.shields.io/crates/v/uniform-array-derive
 
 [crates-link]: https://crates.io/crates/uniform-array-derive
@@ -63,8 +76,7 @@ the [ensure-uniform-type](https://github.com/sunsided/ensure-uniform-type-rs) cr
 
 [msrv-image]: https://img.shields.io/badge/rustc-1.70+-blue.svg
 
-[license-eupl-image]: https://img.shields.io/badge/license-EUPL_1.2-blue.svg
+[license-image]: https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg
 
-[license-eupl-link]: https://github.com/sunsided/uniform-array-derive/blob/develop/LICENSE-EUPL
+[license-link]: https://github.com/sunsided/uniform-array-derive#license
 
-[cc]: https://contributor-covenant.org
