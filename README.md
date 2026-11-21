@@ -10,11 +10,15 @@
 [![License: MIT OR Apache-2.0][license-image]][license-link]
 
 This will derive `AsRef<[T]>`, `AsMut<[T]>`, `Deref<Target = [T]>`, `DerefMut`, `Index<Target = T>` and `IndexMut`
-for your homogeneous structs field type `T`. Since the generated code is `unsafe`, it is feature gated behind a
-`#[cfg(feature = "unsafe")]` by default.
+for your homogeneous structs field type `T`. Since the slice conversions are `unsafe`, they are feature gated behind
+`#[cfg(feature = "unsafe")]` by default. `Index`, `IndexMut`, `len` and `is_empty` are always available.
+
+When the feature gate is enabled, the struct must be `#[repr(C)]` (or `#[repr(transparent)]` for a single field)
+so that its layout matches `[T; N]`. `packed` and `align` representations are rejected.
 
 ```rust
 #[derive(UniformArray)]
+#[repr(C)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -22,6 +26,7 @@ pub struct Vector3 {
 }
 
 #[derive(UniformArray)]
+#[repr(C)]
 pub struct Coordinate(u32, u32);
 ```
 
@@ -31,6 +36,7 @@ If you need to rename the feature gate, you can do that as well:
 /// Use a custom feature gate instead of "unsafe".
 #[derive(UniformArray)]
 #[uniform_array(safety_gate = "super_unsafe")]
+#[repr(C)]
 pub struct Quaternion<T>
 where
     T: Sized,
@@ -40,6 +46,15 @@ where
     pub c: T,
     pub d: T,
 }
+```
+
+To mark the gated items on docs.rs, name the cfg your crate uses for docs.rs builds:
+
+```rust
+#[derive(UniformArray)]
+#[uniform_array(docs_rs = "docsrs")]
+#[repr(C)]
+pub struct Vector2(f32, f32);
 ```
 
 If you only need to ensure that all your fields have the same type, consider
@@ -74,7 +89,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [safety-link]: https://github.com/rust-secure-code/safety-dance/
 
-[msrv-image]: https://img.shields.io/badge/rustc-1.70+-blue.svg
+[msrv-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
 
 [license-image]: https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg
 

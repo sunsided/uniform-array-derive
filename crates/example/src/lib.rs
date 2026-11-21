@@ -1,8 +1,88 @@
+//! Examples and tests for `uniform-array-derive`.
+//!
+//! Fields of different types are rejected:
+//!
+//! ```compile_fail,E0308
+//! # use uniform_array_derive::UniformArray;
+//! #[derive(UniformArray)]
+//! #[repr(C)]
+//! struct Mixed { a: f32, b: i32 }
+//! ```
+//!
+//! The check is exact: a field that only deref-coerces to the first field's type is rejected,
+//!
+//! ```compile_fail,E0308
+//! # use uniform_array_derive::UniformArray;
+//! #[derive(UniformArray)]
+//! #[repr(C)]
+//! struct Boxed(Box<usize>, Box<Box<usize>>);
+//! ```
+//!
+//! and so is a field with a different lifetime:
+//!
+//! ```compile_fail
+//! # use uniform_array_derive::UniformArray;
+//! #[derive(UniformArray)]
+//! #[repr(C)]
+//! struct Lifetimes<'a>(&'a u8, &'static u8);
+//! ```
+//!
+//! Spelling the same type differently is fine:
+//!
+//! ```
+//! # use uniform_array_derive::UniformArray;
+//! type Float = f32;
+//! #[derive(UniformArray)]
+//! #[repr(C)]
+//! struct Aliased { a: f32, b: Float, c: core::primitive::f32 }
+//! ```
+//!
+//! Enums are rejected with a compile error:
+//!
+//! ```compile_fail
+//! # use uniform_array_derive::UniformArray;
+//! #[derive(UniformArray)]
+//! enum E { A }
+//! ```
+//!
+#![cfg_attr(
+    feature = "unsafe",
+    doc = r#"
+With the safety gate enabled, the struct must be `repr(C)` or `repr(transparent)`:
+
+```compile_fail
+# use uniform_array_derive::UniformArray;
+#[derive(UniformArray)]
+struct NoRepr { a: f32, b: f32 }
+```
+
+`align` and `packed` representations are rejected, since they add padding:
+
+```compile_fail
+# use uniform_array_derive::UniformArray;
+#[derive(UniformArray)]
+#[repr(C, align(16))]
+struct Aligned { x: f32, y: f32, z: f32 }
+```
+"#
+)]
+//!
+//! The `docs_rs` option names the cfg that enables `doc(cfg(...))` badges:
+//!
+//! ```
+//! # use uniform_array_derive::UniformArray;
+//! #[derive(UniformArray)]
+//! #[uniform_array(docs_rs = "docsrs")]
+//! #[repr(C)]
+//! struct Documented(f32, f32);
+//! ```
+
 use uniform_array_derive::UniformArray;
 
 /// An example type.
 #[derive(Default, UniformArray)]
 #[uniform_array(safety_gate = "unsafest")]
+#[repr(C)]
 pub struct NamedGeneric<T>
 where
     T: Sized,
@@ -16,6 +96,7 @@ where
 /// An example type.
 #[derive(Default, UniformArray)]
 #[uniform_array(safety_gate = "unsafe")]
+#[repr(C)]
 pub struct Named {
     pub a: f32,
     pub b: f32,
@@ -25,15 +106,22 @@ pub struct Named {
 
 /// An example type.
 #[derive(Default, UniformArray)]
+#[repr(transparent)]
 pub struct Newtype(pub i32);
 
 /// An example type.
 #[derive(Default, UniformArray)]
+#[repr(C)]
 pub struct Tuple(pub i32, pub i32);
 
 /// An example type.
 #[derive(Default, UniformArray)]
 pub struct Unit;
+
+/// An example type borrowing its fields.
+#[derive(UniformArray)]
+#[repr(C)]
+pub struct Borrowed<'a, T>(pub &'a T, pub &'a T);
 
 #[cfg(test)]
 mod tests {
@@ -100,6 +188,30 @@ mod tests {
     #[cfg(feature = "unsafest")]
     fn named_generic_safety() {
         let _some = NamedGeneric::<f32>::from_slice(&[0.0; 4]);
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe")]
+    fn tuple_unsafe() {
+        let mut value = Tuple(1, 2);
+        assert_eq!(value.as_ref(), &[1, 2]);
+        value.as_mut()[0] = 3;
+        assert_eq!(value.0, 3);
+        assert_eq!(Tuple::from_mut_slice(&mut [4, 5]).1, 5);
+
+        let (a, b) = (1, 2);
+        let pair = [&a, &b];
+        assert_eq!(*Borrowed::from_slice(&pair).1, 2);
+
+        let newtype = Newtype(7);
+        assert_eq!(&*newtype, &[7]);
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe")]
+    #[should_panic]
+    fn from_slice_wrong_len() {
+        let _ = Tuple::from_slice(&[1, 2, 3]);
     }
 
     #[test]
